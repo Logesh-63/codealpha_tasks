@@ -1,0 +1,108 @@
+INTENTS.JSON
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": ["Hi", "Hello", "Hey", "Good morning"],
+      "responses": ["Hello!", "Hi there!", "Greetings!"]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": ["Bye", "See you", "Goodbye"],
+      "responses": ["Goodbye!", "See you later!", "Take care!"]
+    },
+    {
+      "tag": "thanks",
+      "patterns": ["Thanks", "Thank you", "Much appreciated"],
+      "responses": ["You're welcome!", "No problem!", "Anytime!"]
+    },
+    {
+      "tag": "noanswer",
+      "patterns": [],
+      "responses": ["Sorry, I didn't understand that.", "Please rephrase your question."]
+    }
+  ]
+}
+
+TRAIN THE CHATBOT
+import json
+import random
+import nltk
+import pickle
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import LinearSVC
+
+nltk.download('punkt')
+nltk.download('stopwords')
+
+with open("intents.json") as f:
+    data = json.load(f)
+
+corpus = []
+labels = []
+
+for intent in data['intents']:
+    for pattern in intent['patterns']:
+        corpus.append(pattern.lower())
+        labels.append(intent['tag'])
+
+vectorizer = TfidfVectorizer(tokenizer=nltk.word_tokenize, stop_words='english')
+X = vectorizer.fit_transform(corpus)
+
+model = LinearSVC()
+model.fit(X, labels)
+
+# Save model and vectorizer
+pickle.dump(model, open("model.pkl", "wb"))
+pickle.dump(vectorizer, open("vectorizer.pkl", "wb"))
+
+
+CHATBOT INFERENCE LOGIC
+import random
+import json
+import pickle
+import nltk
+
+nltk.download('punkt')
+
+# Load model and vectorizer
+model = pickle.load(open("model.pkl", "rb"))
+vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
+
+with open("intents.json") as f:
+    intents = json.load(f)
+
+def get_response(msg):
+    X = vectorizer.transform([msg.lower()])
+    tag = model.predict(X)[0]
+
+    for intent in intents['intents']:
+        if intent['tag'] == tag:
+            return random.choice(intent['responses'])
+
+    # Default fallback
+    return random.choice([r for i in intents['intents'] if i['tag'] == 'noanswer' for r in i['responses']])
+
+# Run interaction loop
+while True:
+    inp = input("You: ")
+    if inp.lower() in ['quit', 'exit']:
+        break
+    print("Bot:", get_response(inp))
+
+
+MAKE IT A WEB API WITH FLASK
+
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    user_msg = request.json.get("message")
+    response = get_response(user_msg)
+    return jsonify({"response": response})
+
+app.run(port=5000)
+
+
