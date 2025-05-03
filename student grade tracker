@@ -1,0 +1,60 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+class Student {
+    String name;
+    ArrayList<Double> grades;
+
+    public Student(String name) {
+        this.name = name;
+        this.grades = new ArrayList<>();
+    }
+
+    public void addGrade(double grade) {
+        grades.add(grade);
+    }
+
+    public double calculateAverage() {
+        if (grades.isEmpty()) return 0;
+        double sum = 0;
+        for (double grade : grades) {
+            sum += grade;
+        }
+        return sum / grades.size();
+    }
+
+    public void displayInfo() {
+        System.out.println("Student Name: " + name);
+        System.out.println("Grades: " + grades);
+        System.out.printf("Average: %.2f\n", calculateAverage());
+        System.out.println("-------------------------");
+    }
+}
+
+public class GradeTracker {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        ArrayList<Student> students = new ArrayList<>();
+        
+        System.out.print("Enter number of students: ");
+        int numStudents = scanner.nextInt();
+        scanner.nextLine(); // consume newline
+
+        for (int i = 0; i < numStudents; i++) {
+            System.out.print("\nEnter student name: ");
+            String name = scanner.nextLine();
+            Student student = new Student(name);
+
+            System.out.print("Enter number of grades for " + name + ": ");
+            int numGrades = scanner.nextInt();
+            for (int j = 0; j < numGrades; j++) {
+                System.out.print("Enter grade " + (j + 1) + ": ");
+                double grade = scanner.nextDouble();
+                student.addGrade(grade);
+            }
+            scanner.nextLine(); // consume newline
+
+            students.add(student);
+        }
+
+        System.out.println("\n--- Student Grade Report ---
